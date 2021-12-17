@@ -1,5 +1,6 @@
 name: "Azure Terragrunt PR Plan"
 on:
+  pull_request:
   workflow_call:
     inputs:
       CONTAINER:
