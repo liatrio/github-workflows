@@ -11,6 +11,11 @@ on:
         type: string
         description: "Command to run tests"
         default: "go test -v ./..."
+      uploadToCodeCov:
+        required: false
+        type: boolean
+        description: "Send code coverage output to CodeCov"
+        default: true
 
 jobs:
   test:
@@ -31,8 +36,10 @@ jobs:
       - name: Test
         run: |
           ${{ inputs.testCommand }}
-          bash -c '/bin/bash <(curl -s https://codecov.io/bash)'
+
+      - name: Upload Code Coverage
+        if: ${{ inputs.uploadToCodeCov }}
+        uses: codecov/codecov-action@v2
 
       - name: Build
         run: go build -v .
- 
