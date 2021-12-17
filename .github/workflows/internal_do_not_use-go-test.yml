@@ -8,4 +8,4 @@ on:
 
 jobs:
   test-workflow:
-    uses: liatrio/github-workflows/.github/workflows/go-test.yml@${{ github.base_ref }}
+    uses: liatrio/github-workflows/.github/workflows/go-test.yml@${{github.base_ref}}
