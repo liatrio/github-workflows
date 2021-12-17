@@ -1,4 +1,4 @@
-name: "Pull Request"
+name: "Azure Terragrunt PR Plan"
 on:
   workflow_call:
     inputs:
