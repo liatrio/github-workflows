@@ -11,6 +11,11 @@ on:
         type: string
         description: "Command to run tests"
         default: "go test -v ./..."
+      workingDirectory:
+        required: false
+        type: string
+        default: "."
+        description: "Working directory"
       uploadToCodeCov:
         required: false
         type: boolean
@@ -24,6 +29,9 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
+      - name: Change Working Directory
+        run: |
+          cd ${{ inputs.workingDirectory }}
 
       - name: Setup Go
         uses: actions/setup-go@v2

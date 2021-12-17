@@ -10,3 +10,5 @@ on:
 jobs:
   test-workflow:
     uses: liatrio/github-workflows/.github/workflows/go-test.yml@go-test
+    with:
+      workingDirectory: test/go-test
