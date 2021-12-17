@@ -29,9 +29,6 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
-      - name: Change Working Directory
-        run: |
-          cd ${{ inputs.workingDirectory }}
 
       - name: Setup Go
         uses: actions/setup-go@v2
@@ -39,9 +36,11 @@ jobs:
           go-version: ${{ inputs.goVersion }}
 
       - name: Download Dependencies
+        working-directory: ${{ inputs.workingDirectory }}
         run: go mod download
 
       - name: Test
+        working-directory: ${{ inputs.workingDirectory }}
         run: |
           ${{ inputs.testCommand }}
 
