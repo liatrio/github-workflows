@@ -1,0 +1,38 @@
+on:
+  workflow_call:
+    inputs:
+      goVersion:
+        required: false
+        type: string
+        description: "Golang version"
+        default: "1.17"
+      testCommand:
+        required: false
+        type: string
+        description: "Command to run tests"
+        default: "go test -v ./..."
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ inputs.goVersion }}
+
+      - name: Download Dependencies
+        run: go mod download
+
+      - name: Test
+        run: |
+          ${{ inputs.testCommand }}
+          bash -c '/bin/bash <(curl -s https://codecov.io/bash)'
+
+      - name: Build
+        run: go build -v .
+ 
