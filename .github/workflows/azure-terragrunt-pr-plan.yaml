@@ -12,7 +12,7 @@ on:
         type: string
         default: ./
     secrets:
-      AZURE_CLIENT_ID: 
+      AZURE_CLIENT_ID:
         required: true
       AZURE_CLIENT_SECRET:
         required: true
@@ -32,7 +32,7 @@ jobs:
 
       - name: Terragrunt hcl check
         run: terragrunt hclfmt --terragrunt-check
-      
+
       - name: Terraform fmt check
         run: terraform fmt -check -recursive
 
@@ -43,7 +43,7 @@ jobs:
           ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
-      - name: Terragrunt Plan 
+      - name: Terragrunt Plan
         id: terragrunt_plan
         run: |
           terragrunt plan --terragrunt-non-interactive -out plan.out
@@ -57,19 +57,19 @@ jobs:
       - name: Comment on pull request
         uses: actions/github-script@v3
         with:
-            script: |
-              const fs = require('fs');
-              const output = `
-              #### Terragrunt Plan \`${{ steps.plan_users_and_groups.outcome }}\`
-              <details><summary>Show Plan</summary>
-              \`\`\`${fs.readFileSync('${{inputs.WORKING_DIR}}/plan.txt')}\`\`\`
-              </details>`;
-              github.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: output
-              })
+          script: |
+            const fs = require('fs');
+            const output = `
+            #### Terragrunt Plan \`${{ steps.plan_users_and_groups.outcome }}\`
+            <details><summary>Show Plan</summary>
+            \`\`\`${fs.readFileSync('${{inputs.WORKING_DIR}}/plan.txt')}\`\`\`
+            </details>`;
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
 
       - name: Status
         if: contains(steps.*.outcome, 'failure')
