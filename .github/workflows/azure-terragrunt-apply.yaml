@@ -1,8 +1,5 @@
 name: "Terragrunt Apply"
 on:
-  push:
-    branches:
-      - main
   workflow_call:
     inputs:
       CONTAINER:
