@@ -9,6 +9,6 @@ on:
 
 jobs:
   test-workflow:
-    uses: liatrio/github-workflows/.github/workflows/go-test.yml@go-test
+    uses: liatrio/github-workflows/.github/workflows/go-test.yml
     with:
       workingDirectory: test/go-test
