@@ -3,7 +3,7 @@ on:
   workflow_call:
     inputs:
       CONTAINER:
-        required: true
+        required: false
         type: string
         default: ghcr.io/liatrio/builder-image-azure-terraform:v2.1.0
       WORKING_DIR:
