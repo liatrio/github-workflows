@@ -47,7 +47,7 @@ jobs:
         run: |
           terragrunt plan --terragrunt-non-interactive -out plan.out
           terragrunt show --terragrunt-non-interactive -no-color plan.out > plan.txt
-        continue-on-error: true # Continue on error to ensure the plan is added as a comment on the PR
+        continue-on-error: true # Continue on error to ensure the plan is added as a comment on the PR.
         env:
           ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
