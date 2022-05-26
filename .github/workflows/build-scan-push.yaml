@@ -158,7 +158,7 @@ jobs:
         with:
           registry: ${{ inputs.repository }}
           username: ${{ inputs.repository-username }}
-          password: ${{ inputs.repository-password }}
+          password: ${{ secrets.repository-password }}
 
       - name: Push
         if: ${{ inputs.publish }}
