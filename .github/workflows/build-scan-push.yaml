@@ -1,0 +1,172 @@
+name: Build, Scan, and Push
+
+on:
+  workflow_call:
+    inputs:
+      # Image metadata
+      repository:
+        required: true
+        type: string
+      tag:
+        required: true
+        type: string
+
+      # Use a Skaffold build Matrix OR a single image
+      image-name:
+        required: false
+        type: string
+        default: ''
+      working-directory:
+        description: 'Image build context'
+        type: string
+        required: false
+        default: '.' 
+      # This has lower precendance that the image-name.
+      build-matrix:
+        description: '[{image,context}] matrix, like a skaffold.yml file'
+        type: string
+        required: false
+        default: '' 
+      # Build Matrix
+      ## Don't use this if using a matrix
+      dockerfile:
+        description: 'Dockerfile path'
+        type: string
+        required: false
+        default: 'Dockerfile' 
+
+      # Build options
+      publish:
+        required: false
+        type: boolean
+        default: false
+      nofail:
+        required: false
+        type: boolean
+        default: false
+      build-args:
+        required: false
+        type: string
+      publish-args:
+        required: false
+        type: string
+
+      platforms:
+        description: "Platforms to build with buildx"
+        type: string
+        required: false
+        default: "linux/amd64"
+
+      # Container Registry config
+      registry-username:
+        required: false
+        type: string
+        default: ""
+    secrets:
+      registry-password:
+        required: false
+
+jobs:
+  listimages:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.get-matrix.outputs.result }}
+    steps:
+    - uses: actions/checkout@master
+    - id: get-matrix
+      uses: mikefarah/yq@master
+      with:
+        cmd: |
+          if test -z '${{ inputs.build-matrix }}'; then
+            echo '[{"image":"${{inputs.image-name}}","context":"${{inputs.working-directory}}"}]';
+          else
+            printf '['
+            cat <<EOF | yq -o=json e . - | tr -d '[[:space:]]'
+          ${{ inputs.build-matrix }}
+          EOF
+            printf ']'
+          fi
+
+  build:
+    name: Build & Push
+    needs: [listimages]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: 
+        include: ${{fromJson(needs.listimages.outputs.matrix)}}
+    permissions:
+      contents: read # for actions/checkout to fetch code
+      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build
+        uses: docker/build-push-action@v3
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.context }}/${{ inputs.dockerfile }}
+          platforms: ${{ inputs.platforms }}
+          load: true
+          #outputs: type=oci,dest=/tmp/image-${{ inputs.image-name }}.tar
+          tags: ${{ inputs.repository }}/${{ matrix.image }}:${{ inputs.tag }}
+          build-args: ${{ inputs.build-args }}
+
+      # Adapted from
+      # https://github.com/actions/starter-workflows/blob/7e07c9f957bcf13ea918eed46110c52e678649c0/code-scanning/trivy.yml#L20-L47
+      - name: Convert nofail to exit code
+        id: exit-code
+        run: |
+          if test "${{ inputs.nofail }}" = "true"; then
+            exit_code=0
+          else
+            exit_code=1
+          fi
+          printf '::set-output name=exit_code::%d\n' $exit_code
+
+      # Scan
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@2a2157eb22c08c9a1fac99263430307b8d1bc7a2
+        with:
+          image-ref: ${{ inputs.repository }}/${{ matrix.image }}:${{ inputs.tag }}
+          #input: /tmp/image-${{ inputs.image-name }}.tar
+          format: 'template'
+          exit-code: ${{ steps.exit-code.outputs.exit_code }}
+          template: '@/contrib/sarif.tpl'
+          output: 'trivy-results.sarif'
+          severity: CRITICAL
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+          checkout_path: ${{ matrix.context }}
+
+      - name: Login to Container Registry
+        if: ${{ inputs.publish }}
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ inputs.repository }}
+          username: ${{ inputs.repository-username }}
+          password: ${{ secrets.repository-password }}
+
+      - name: Push
+        if: ${{ inputs.publish }}
+        uses: docker/build-push-action@v3
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.context }}/${{ inputs.dockerfile }}
+          platforms: ${{ inputs.platforms }}
+          push: true
+          tags: ${{ inputs.repository }}/${{ matrix.image }}:${{ inputs.tag }}
+          build-args: ${{ inputs.publish-args }}
