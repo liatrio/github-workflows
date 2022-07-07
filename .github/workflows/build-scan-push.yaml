@@ -95,7 +95,9 @@ jobs:
       fail-fast: false
       matrix: 
         include: ${{fromJson(needs.listimages.outputs.matrix)}}
-    permissions: write-all
+    permissions:
+      contents: read # for actions/checkout to fetch code
+      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
 #       contents: read # for actions/checkout to fetch code
 #       security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
 #       packages: write
