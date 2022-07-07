@@ -168,5 +168,5 @@ jobs:
           file: ${{ matrix.context }}/${{ inputs.dockerfile }}
           platforms: ${{ inputs.platforms }}
           push: true
-          tags: ${{ inputs.repository }}/${{ matrix.image }}:${{ inputs.tag }}
+          tags: ${{ inputs.repository }}/liatrio/${{ matrix.image }}:${{ inputs.tag }}
           build-args: ${{ inputs.publish-args }}
