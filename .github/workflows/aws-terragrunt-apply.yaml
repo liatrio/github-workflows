@@ -1,0 +1,34 @@
+name: "Terragrunt Apply"
+on:
+  workflow_call:
+    inputs:
+      CONTAINER:
+        required: false
+        type: string
+        default: ghcr.io/liatrio/runner-image-lead-terraform:v2.6.1
+      WORKING_DIR:
+        required: false
+        type: string
+        default: ./
+      TERRAGRUNT_ROLE:
+        type: string
+        required: true
+
+env:
+  TERRAGRUNT_IAM_ROLE: ${{ inputs.TERRAGRUNT_IAM_ROLE }}
+
+jobs:
+  apply:
+    name: "AWS Terragrunt Apply"
+    runs-on: ubuntu-latest
+    container: ${{ inputs.CONTAINER }}
+    defaults:
+      run:
+        working-directory: ${{ inputs.WORKING_DIR }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Apply users-and-groups
+        run: terragrunt apply --terragrunt-non-interactive -auto-approve
+        

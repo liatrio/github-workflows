@@ -1,0 +1,83 @@
+name: "AWS Terragrunt PR Plan"
+on:
+  workflow_call:
+    inputs:
+      CONTAINER:
+        required: false
+        type: string
+        default: ghcr.io/liatrio/runner-image-lead-terraform:v2.6.1
+      WORKING_DIR:
+        required: false
+        type: string
+        default: ./
+      TERRAGRUNT_ROLE:
+        type: string
+        required: true
+
+env:
+  TERRAGRUNT_IAM_ROLE: ${{ inputs.TERRAGRUNT_IAM_ROLE }}
+
+jobs:
+
+  aws-terragrunt-pr-plan:
+    name: "AWS Terragrunt PR Plan"
+    runs-on: ubuntu-latest
+    container: ${{ inputs.CONTAINER }}
+    defaults:
+      run:
+        working-directory: ${{ inputs.WORKING_DIR }}
+     
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Terragrunt hcl check
+        run: terragrunt hclfmt --terragrunt-check
+
+      - name: Terraform fmt check
+        run: terraform fmt -check -recursive
+
+      - name: Terragrunt validate check
+        run: terragrunt validate-all
+
+      - name: tfsec
+        uses: aquasecurity/tfsec-sarif-action@v0.1.3
+        with:
+          sarif_file: tfsec.sarif
+          working_directory: ${{ inputs.WORKING_DIR }}
+          tfsec_args: "-e general-secrets-sensitive-in-variable,general-secrets-sensitive-in-local,general-secrets-sensitive-in-attribute"
+
+      - name: Upload SARIF file
+        if: always()
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: tfsec.sarif
+        
+      - name: Terragrunt Plan
+        id: terragrunt_plan
+        run: |
+          terragrunt plan --terragrunt-non-interactive -out plan.out
+          terragrunt show --terragrunt-non-interactive -no-color plan.out > plan.txt
+        continue-on-error: true # Continue on error to ensure the plan is added as a comment on the PR.
+ 
+      - name: Comment on pull request
+        uses: actions/github-script@v3
+        with:
+          script: |
+            const fs = require('fs');
+            const output = `
+            #### Terragrunt Plan \`${{ steps.terragrunt_plan.outcome }}\`
+            <details><summary>Show Plan</summary>
+            \`\`\`${fs.readFileSync('${{inputs.WORKING_DIR}}/plan.txt')}\`\`\`
+            </details>`;
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
+      - name: Status
+        if: contains(steps.*.outcome, 'failure')
+        run: exit 1
