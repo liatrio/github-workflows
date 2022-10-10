@@ -140,8 +140,9 @@ jobs:
         with:
           image-ref: ${{ inputs.repository }}/${{ matrix.image }}:${{ inputs.tag }}
           #input: /tmp/image-${{ inputs.image-name }}.tar
-          format: 'sarif'
+          format: 'template'
           exit-code: ${{ steps.exit-code.outputs.exit_code }}
+          template: '@/contrib/sarif.tpl'
           output: 'trivy-results.sarif'
           severity: HIGH,CRITICAL
 
