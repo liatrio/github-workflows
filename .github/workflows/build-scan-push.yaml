@@ -140,11 +140,10 @@ jobs:
         with:
           image-ref: ${{ inputs.repository }}/${{ matrix.image }}:${{ inputs.tag }}
           #input: /tmp/image-${{ inputs.image-name }}.tar
-          format: 'template'
+          format: 'sarif'
           exit-code: ${{ steps.exit-code.outputs.exit_code }}
-          template: '@/contrib/sarif.tpl'
           output: 'trivy-results.sarif'
-          severity: CRITICAL
+          severity: HIGH,CRITICAL
 
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v2
