@@ -18,4 +18,8 @@ jobs:
         # Checks that all Terraform configuration files adhere to a canonical format
       - name: Run fmt with diffs 
         run: terraform fmt -check -diff ${{ inputs.work-dir }}
-      
+          # Checks that all Terraform configuration files adhere to a canonical format
+      - name: Terraform Format
+        run: terraform init -backend=false
+      - name: Terraform validate
+        run: terraform validate
