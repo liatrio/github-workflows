@@ -57,6 +57,12 @@ on:
         required: false
         default: "linux/amd64"
 
+      # Trivy-Scan options
+      timeout:
+        required: false
+        type: string
+        default: 5m
+
       # Container Registry config
       registry-username:
         required: false
@@ -145,6 +151,7 @@ jobs:
           template: '@/contrib/sarif.tpl'
           output: 'trivy-results.sarif'
           severity: HIGH,CRITICAL
+          timeout: ${{ inputs.timeout }}
 
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v2
