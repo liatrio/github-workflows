@@ -1,0 +1,62 @@
+name: Add Terraform Plan PR Comments
+on:
+  workflow_call:
+    inputs:
+      WORK_DIR:
+        required: false
+        type: string
+        default: ./
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      AWS_DEFAULT_REGION:
+        required: true
+
+jobs:
+  plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v3
+
+      - name: Terraform Init
+        run: terraform init -backend=false
+
+      - name: Terraform Plan
+        id: terraform_plan
+        run: |
+          terraform plan -input=false -out plan.out
+          terraform show -no-color plan.out > plan.txt
+        continue-on-error: true
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+
+      - name: Comment on PR
+        uses: actions/github-script@v3
+        with:
+          script: |
+            const fs = require('fs');
+            const output = `
+            #### Terraform Plan
+            <details><summary>Show Plan</summary>
+
+            \`\`\`
+            ${fs.readFileSync('${{inputs.WORK_DIR}}/plan.txt')}
+            \`\`\`
+
+            </details>`;
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
+      - name: Status
+        if: contains(steps.*.outcome, 'failure')
+        run: exit 1

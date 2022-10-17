@@ -1,0 +1,25 @@
+name: Terraform Format Check
+on:
+  workflow_call:
+    inputs:
+      work-dir:
+        required: true
+        type: string
+
+jobs:
+  fmt:
+    name: Check Terraform formatting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout codebase
+        uses: actions/checkout@v3
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1
+        # Checks that all Terraform configuration files adhere to a canonical format
+      - name: Run fmt with diffs 
+        run: terraform fmt -check -diff ${{ inputs.work-dir }}
+          # Checks that all Terraform configuration files adhere to a canonical format
+      - name: Terraform Format
+        run: terraform init -backend=false
+      - name: Terraform validate
+        run: terraform validate
