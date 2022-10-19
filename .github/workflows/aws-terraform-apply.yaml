@@ -1,4 +1,4 @@
-name: Add Terraform Plan
+name: Apply Terraform Plan
 on:
   workflow_call:
     inputs:
@@ -18,7 +18,7 @@ on:
 
 jobs:
   plan:
-    name: Terraform Plan
+    name: Terraform Apply
     runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
@@ -37,28 +37,5 @@ jobs:
       - name: Initialize Terraform
         run: terraform init -input=false -backend=false
 
-      - name: Run Terraform Plan
-        run: |
-          terraform plan -input=false -out plan.out
-          terraform show -no-color plan.out > plan.txt
-
-      - name: Comment on PR
-        uses: actions/github-script@v6.3.3
-        with:
-          script: |
-            const fs = require('fs');
-            const output = `
-            #### Terraform Plan
-            <details><summary>Show Plan</summary>
-
-            \`\`\`
-            ${fs.readFileSync('${{inputs.WORK_DIR}}/plan.txt')}
-            \`\`\`
-
-            </details>`;
-            github.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            })
+      - name: Apply Terraform Plan
+        run: terraform apply -input=false -auto-approve
