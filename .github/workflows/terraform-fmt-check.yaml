@@ -2,7 +2,7 @@ name: Terraform Format Check
 on:
   workflow_call:
     inputs:
-      work-dir:
+      WORK_DIR:
         required: true
         type: string
 
@@ -11,15 +11,19 @@ jobs:
     name: Check Terraform formatting
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout codebase
-        uses: actions/checkout@v3
+      - name: Checkout Codebase
+        uses: actions/checkout@v3.1.0
+
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v1
-        # Checks that all Terraform configuration files adhere to a canonical format
+        uses: hashicorp/setup-terraform@v2.0.2
+        with:
+          terraform_version: 1.3.1
+
+      - name: Initialize Terraform
+        run: terraform init -input=false -backend=false
+
       - name: Run fmt with diffs 
-        run: terraform fmt -check -diff ${{ inputs.work-dir }}
-          # Checks that all Terraform configuration files adhere to a canonical format
-      - name: Terraform Format
-        run: terraform init -backend=false
-      - name: Terraform validate
+        run: terraform fmt -check -diff ${{ inputs.WORK_DIR }}
+
+      - name: Validate Terraform
         run: terraform validate
