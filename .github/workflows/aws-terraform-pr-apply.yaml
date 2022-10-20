@@ -40,7 +40,7 @@ jobs:
           terraform_version: 1.3.1
 
       - name: Initialize Terraform
-        run: terraform init -input=false -backend=false
+        run: terraform -chdir=${{ inputs.WORK_DIR }} init -input=false -backend=false
 
       - name: Apply Terraform Plan
-        run: terraform apply -input=false -auto-approve -chdir ${{ inputs.WORK_DIR }}
+        run: terraform -chdir=${{ inputs.WORK_DIR }} apply -input=false -auto-approve
