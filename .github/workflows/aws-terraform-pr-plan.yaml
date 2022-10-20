@@ -6,15 +6,6 @@ on:
         required: false
         type: string
         default: ./
-    secrets:
-      AWS_ACCESS_KEY_ID:
-        required: true
-      AWS_SECRET_ACCESS_KEY:
-        required: true
-      AWS_DEFAULT_REGION:
-        required: true
-      AWS_ASSUMED_ROLE:
-        required: true
 
 jobs:
   plan:
