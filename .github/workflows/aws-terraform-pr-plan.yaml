@@ -2,15 +2,6 @@ name: Add Terraform Plan
 on:
   workflow_call:
     inputs:
-      REPOSITORY:
-        required: true
-        type: string
-      OWNER:
-        required: true
-        type: string
-      PR_NUMBER:
-        required: true
-        type: string
       WORK_DIR:
         required: false
         type: string
