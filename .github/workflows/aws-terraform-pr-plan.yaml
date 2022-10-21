@@ -2,6 +2,15 @@ name: Add Terraform Plan
 on:
   workflow_call:
     inputs:
+      REPOSITORY:
+        required: true
+        type: string
+      OWNER:
+        required: true
+        type: string
+      PR_NUMBER:
+        required: true
+        type: string
       WORK_DIR:
         required: false
         type: string
@@ -57,13 +66,13 @@ jobs:
             <details><summary>Show Plan</summary>
 
             \`\`\`
-            ${fs.readFileSync('${{inputs.WORK_DIR}}/plan.txt')}
+            ${fs.readFileSync('${{ inputs.WORK_DIR }}/plan.txt')}
             \`\`\`
 
             </details>`;
             github.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
+              issue_number: ${{ inputs.PR_NUMBER }},
+              owner: ${{ inputs.OWNER }},
+              repo: ${{ inputs.REPOSITORY }},
               body: output
             })
