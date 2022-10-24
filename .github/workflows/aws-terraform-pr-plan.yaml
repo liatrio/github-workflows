@@ -15,11 +15,17 @@ on:
         required: true
       AWS_ASSUMED_ROLE:
         required: true
+    outputs:
+      comment:
+        description: "Terraform plan output"
+        value: ${{ jobs.plan.outputs.plan }}
 
 jobs:
   plan:
     name: Terraform Plan
     runs-on: ubuntu-latest
+    outputs:
+      plan: ${{ steps.plan.outputs.plan }}
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1.7.0
@@ -43,6 +49,7 @@ jobs:
         run: terraform -chdir=${{ inputs.WORK_DIR }} init -input=false -backend=false
 
       - name: Run Terraform Plan
+        id: plan
         run: |
           terraform -chdir=${{ inputs.WORK_DIR }} plan -input=false -out plan.out
-          terraform -chdir=${{ inputs.WORK_DIR }} show -no-color plan.out > ${{ inputs.WORK_DIR }}/plan.txt
+          echo "::set-output name=plan::$(terraform -chdir=${{ inputs.WORK_DIR }} show -no-color plan.out)"
