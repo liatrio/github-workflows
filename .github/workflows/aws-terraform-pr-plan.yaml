@@ -52,4 +52,5 @@ jobs:
         id: plan
         run: |
           terraform -chdir=${{ inputs.WORK_DIR }} plan -input=false -out plan.out
-          echo "::set-output name=plan::$(terraform -chdir=${{ inputs.WORK_DIR }} show -no-color plan.out)"
+          terraform -chdir=${{ inputs.WORK_DIR }} show -no-color plan.out > plan.txt
+          echo "::set-output name=plan::$(cat plan.txt)"
