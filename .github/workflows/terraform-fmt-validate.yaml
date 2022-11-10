@@ -1,0 +1,23 @@
+name: "Terraform Format Check & Validate"
+on:
+  workflow_call:
+    inputs:
+      work-dir:
+        required: true
+        type: string
+
+jobs:
+  fmt:
+    name: Terraform Format Check & Validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout codebase
+        uses: actions/checkout@v3
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+      - name: Terraform check formatting
+        run: terraform fmt -check -diff ${{ inputs.work-dir }}
+      - name: Terraform validate
+        run: |
+          terraform -chdir=${{ inputs.work-dir }} init -backend=false
+          terraform -chdir=${{ inputs.work-dir }} validate
