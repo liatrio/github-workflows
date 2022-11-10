@@ -1,4 +1,4 @@
-name: "Terraform Format Check"
+name: "Terraform Format Check & Validate"
 on:
   workflow_call:
     inputs:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   fmt:
-    name: Check Terraform formatting
+    name: Terraform Format Check & Validate
     runs-on: ubuntu-latest
     steps:
       - name: Checkout codebase
@@ -19,7 +19,7 @@ jobs:
       - name: Run fmt with diffs 
         run: terraform fmt -check -diff ${{ inputs.work-dir }}
           # Checks that all Terraform configuration files adhere to a canonical format
-      - name: Terraform Format
-        run: terraform init -backend=false
       - name: Terraform validate
-        run: terraform validate
+        run: |
+          terraform -chdir=${{ inputs.work-dir }} init -backend=false
+          terraform -chdir=${{ inputs.work-dir }} validate
