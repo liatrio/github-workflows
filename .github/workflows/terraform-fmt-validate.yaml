@@ -15,10 +15,8 @@ jobs:
         uses: actions/checkout@v3
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v1
-        # Checks that all Terraform configuration files adhere to a canonical format
-      - name: Run fmt with diffs 
+      - name: Terraform check formatting
         run: terraform fmt -check -diff ${{ inputs.work-dir }}
-          # Checks that all Terraform configuration files adhere to a canonical format
       - name: Terraform validate
         run: |
           terraform -chdir=${{ inputs.work-dir }} init -backend=false
