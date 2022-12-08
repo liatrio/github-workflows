@@ -46,29 +46,16 @@ jobs:
         id: terragrunt_plan
         run: |
           terragrunt plan --terragrunt-non-interactive -out plan.out
-          terragrunt show --terragrunt-non-interactive -no-color plan.out > plan.txt
+          terragrunt show --terragrunt-non-interactive -no-color -json plan.out > plan.json
         continue-on-error: true # Continue on error to ensure the plan is added as a comment on the PR.
         env:
           ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
-      - name: Comment on pull request
-        uses: actions/github-script@v3
+      - uses: liatrio/terraform-change-pr-commenter@v1.3.2
         with:
-          script: |
-            const fs = require('fs');
-            const output = `
-            #### Terragrunt Plan \`${{ steps.terragrunt_plan.outcome }}\`
-            <details><summary>Show Plan</summary>
-            \`\`\`${fs.readFileSync('${{inputs.WORKING_DIR}}/plan.txt')}\`\`\`
-            </details>`;
-            github.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            })
+          json-file: plan.json
 
       - name: Status
         if: contains(steps.*.outcome, 'failure')
