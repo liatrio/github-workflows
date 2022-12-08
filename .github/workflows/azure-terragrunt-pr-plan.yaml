@@ -55,7 +55,7 @@ jobs:
 
       - uses: liatrio/terraform-change-pr-commenter@v1.3.2
         with:
-          json-file: plan.json
+          json-file: ${{ inputs.WORKING_DIR }}/plan.json
 
       - name: Status
         if: contains(steps.*.outcome, 'failure')
