@@ -158,7 +158,8 @@ jobs:
           output: 'trivy-results.sarif'
           severity: HIGH,CRITICAL
           timeout: ${{ inputs.timeout }}
-          offline-scan: ${{ inputs.offline-scan }}
+        env:
+          TRIVY_OFFLINE_SCAN: ${{ inputs.offline-scan }}
 
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v2
