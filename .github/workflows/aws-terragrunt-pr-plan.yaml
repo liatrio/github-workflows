@@ -29,20 +29,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Create aws configuration file
-        run: |
-          mkdir -p ~/.aws
-          echo "[default]" >> ~/.aws/config
-          echo "role_arn = ${{ secrets.AWS_ROLE_ARN }}" >> ~/.aws/config
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-duration-seconds: 1200
+          role-session-name: TestSession
 
-      - name: Configure aws-vault
-        run: aws-vault --env add runner
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
-      - name: Test aws-vault configuration
-        run: aws-vault exec runner -- aws sts get-caller-identity
+      - name: Test assumed role
+        run: aws sts get-caller-identity
 
     #   - name: Terragrunt hcl check
     #     run: terragrunt hclfmt --terragrunt-check
@@ -51,11 +49,11 @@ jobs:
     #     run: terraform fmt -check -recursive
 
     #   - name: Terragrunt validate check
-    #     run: aws-vault terragrunt run-all validate
+    #     run: terragrunt validate-all
     #     env:
     #       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
     #       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-    #       # AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+    #       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
     #   - name: Terragrunt Plan
     #     id: terragrunt_plan
