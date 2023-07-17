@@ -1,4 +1,4 @@
-name: "AWS Terragrunt PR Plan"
+name: "AWS Terragrunt Apply"
 on:
   workflow_call:
     inputs:
@@ -18,8 +18,8 @@ on:
         type: string
 
 jobs:
-  aws-terragrunt-pr-plan:
-    name: "AWS Terragrunt PR Plan"
+  aws-terragrunt-apply:
+    name: "AWS Terragrunt Apply"
     runs-on: ubuntu-latest
     container: ${{ inputs.CONTAINER }}
     permissions:
@@ -40,28 +40,7 @@ jobs:
         with:
           aws-region: ${{ inputs.AWS_REGION }}
           role-to-assume: ${{ inputs.AWS_OIDC_ROLE_ARN }}
-          role-session-name: github-action_aws-terragrunt-pr-plan-oidc
+          role-session-name: github-action_aws-terragrunt-apply-oidc
 
-      - name: Terragrunt hcl check
-        run: terragrunt hclfmt --terragrunt-check
-
-      - name: Terraform fmt check
-        run: terraform fmt -check -recursive
-
-      - name: Terragrunt validate check
-        run: terragrunt run-all validate --terragrunt-non-interactive
-
-      - name: Terragrunt Plan
-        id: terragrunt_plan
-        run: |
-          terragrunt plan --terragrunt-non-interactive -out plan.out
-          terragrunt show --terragrunt-non-interactive -no-color -json plan.out > plan.json
-        continue-on-error: true # Continue on error to ensure the plan is added as a comment on the PR.
-
-      - uses: liatrio/terraform-change-pr-commenter@v1.3.2
-        with:
-          json-file: ${{ inputs.WORKING_DIR }}/plan.json
-
-      - name: Status
-        if: contains(steps.*.outcome, 'failure')
-        run: exit 1
+      - name: Apply infosec users
+        run: terragrunt apply --terragrunt-non-interactive -auto-approve
