@@ -1,4 +1,5 @@
 name: "AWS Terragrunt PR Plan"
+
 on:
   workflow_call:
     inputs:

@@ -1,4 +1,5 @@
 name: "AWS Terragrunt Apply"
+
 on:
   workflow_call:
     inputs:
