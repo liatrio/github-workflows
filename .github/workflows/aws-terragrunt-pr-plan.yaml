@@ -5,23 +5,28 @@ on:
       CONTAINER:
         required: false
         type: string
-        default: ghcr.io/liatrio/builder-image-aws-terraform:v1.0.1
+        default: ghcr.io/liatrio/builder-image-aws-terraform:v1.0.5
       WORKING_DIR:
         required: false
         type: string
         default: ./
-    secrets:
-      AWS_ACCESS_KEY_ID:
+      AWS_OIDC_ROLE_ARN:
         required: true
-      AWS_SECRET_ACCESS_KEY:
+        type: string
+      AWS_REGION:
         required: true
-      AWS_ROLE_ARN:
-        required: true
+        type: string
+
 jobs:
   azure-terragrunt-pr-plan:
     name: "AWS Terragrunt PR Plan"
     runs-on: ubuntu-latest
     container: ${{ inputs.CONTAINER }}
+    permissions:
+      id-token: write # This is required for requesting the JWT
+      contents: read  # This is required for actions/checkout
+      actions: write
+      packages: read
     defaults:
       run:
         working-directory: ${{ inputs.WORKING_DIR }}
@@ -29,19 +34,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Configure AWS Credentials
+      - name: Configure AWS Credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          role-skip-session-tagging: true
-          role-duration-seconds: 1800
-          role-session-name: TestSession
-
-      - name: Test assumed role
-        run: aws sts get-caller-identity
+          aws-region: ${{ inputs.AWS_REGION }}
+          role-to-assume: ${{ inputs.AWS_OIDC_ROLE_ARN }}
+          role-session-name: github-action_aws-terragrunt-pr-plan-oidc
 
       - name: Terragrunt hcl check
         run: terragrunt hclfmt --terragrunt-check
@@ -51,10 +49,6 @@ jobs:
 
       - name: Terragrunt validate check
         run: terragrunt run-all validate --terragrunt-non-interactive
-        # env:
-        #   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        #   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        #   AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
       - name: Terragrunt Plan
         id: terragrunt_plan
@@ -62,14 +56,10 @@ jobs:
           terragrunt plan --terragrunt-non-interactive -out plan.out
           terragrunt show --terragrunt-non-interactive -no-color -json plan.out > plan.json
         continue-on-error: true # Continue on error to ensure the plan is added as a comment on the PR.
-        # env:
-        #   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        #   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        #   AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
-    #   - uses: liatrio/terraform-change-pr-commenter@v1.3.2
-    #     with:
-    #       json-file: ${{ inputs.WORKING_DIR }}/plan.json
+      - uses: liatrio/terraform-change-pr-commenter@v1.3.2
+        with:
+          json-file: ${{ inputs.WORKING_DIR }}/plan.json
 
       - name: Status
         if: contains(steps.*.outcome, 'failure')
