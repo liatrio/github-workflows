@@ -1,0 +1,56 @@
+name: "AWS Terragrunt Apply"
+
+on:
+  workflow_call:
+    inputs:
+      CONTAINER:
+        required: false
+        type: string
+        default: ghcr.io/liatrio/builder-image-aws-terraform:v1.0.5
+      WORKING_DIR:
+        required: false
+        type: string
+        default: ./
+      AWS_OIDC_ROLE_ARN:
+        required: true
+        type: string
+      AWS_REGION:
+        required: true
+        type: string
+      ROLE_SESSION_NAME:
+        required: false
+        type: string
+        default: github-action_aws-terragrunt-apply-oidc
+      ROLE_DURATION_SECTIONS:
+        required: false
+        type: number
+        default: 1200 # 20 min
+
+jobs:
+  aws-terragrunt-apply:
+    name: "AWS Terragrunt Apply"
+    runs-on: ubuntu-latest
+    container: ${{ inputs.CONTAINER }}
+    permissions:
+      id-token: write # This is required for requesting the JWT
+      contents: read  # This is required for actions/checkout
+      actions: write
+      packages: read # This is required for the workflow to pull a container
+      pull-requests: write
+    defaults:
+      run:
+        working-directory: ${{ inputs.WORKING_DIR }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Configure AWS Credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-region: ${{ inputs.AWS_REGION }}
+          role-to-assume: ${{ inputs.AWS_OIDC_ROLE_ARN }}
+          role-session-name: ${{ inputs.ROLE_SESSION_NAME }}
+          role-duration-seconds: ${{ inputs.ROLE_DURATION_SECTIONS }}
+
+      - name: Run Terragrunt Apply
+        run: terragrunt apply --terragrunt-non-interactive -auto-approve
