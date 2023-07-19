@@ -17,6 +17,14 @@ on:
       AWS_REGION:
         required: true
         type: string
+      ROLE_SESSION_NAME:
+        required: false
+        type: string
+        default: github-action_aws-terragrunt-pr-plan-oidc
+      ROLE_DURATION_SECTIONS:
+        required: false
+        type: number
+        default: 1200 # 20 min
 
 jobs:
   aws-terragrunt-pr-plan:
@@ -27,8 +35,8 @@ jobs:
       id-token: write # This is required for requesting the JWT
       contents: read  # This is required for actions/checkout
       actions: write
-      packages: read
-      pull-requests: write
+      packages: read # This is required for the workflow to pull a container
+      pull-requests: write # This is required by liatrio/terrafrom-chage-pr-commenter
     defaults:
       run:
         working-directory: ${{ inputs.WORKING_DIR }}
@@ -41,7 +49,8 @@ jobs:
         with:
           aws-region: ${{ inputs.AWS_REGION }}
           role-to-assume: ${{ inputs.AWS_OIDC_ROLE_ARN }}
-          role-session-name: github-action_aws-terragrunt-pr-plan-oidc
+          role-session-name: ${{ inputs.ROLE_SESSION_NAME }}
+          role-duration-seconds: ${{ inputs.ROLE_DURATION_SECTIONS }}
 
       - name: Terragrunt hcl check
         run: terragrunt hclfmt --terragrunt-check
