@@ -35,11 +35,6 @@ jobs:
           CHANGED_MODULES=$(echo ${{ steps.changed-files.outputs.changed_keys }} | jq -R -c 'split(" ")')
           echo "value=$CHANGED_MODULES" >> $GITHUB_OUTPUT
 
-  test:
-    needs: [ setup ]
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "${{ needs.setup.outputs.matrix }}"
   tag-releases:
     needs: [ setup ]
     if: needs.setup.outputs.matrix != '[]'
