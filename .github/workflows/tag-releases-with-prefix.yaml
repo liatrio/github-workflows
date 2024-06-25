@@ -19,6 +19,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Find all module names/locations
+        # Outputs a files.yaml for tj-actions/changed-files with keys of all files/directories in the input and search paths matching the given directory path plus an optional suffix. i.e.
+        # module_one:
+        #   - modules/module_one/**
+        # module_two:
+        #   - modules/module_two/**
         run: ls ${{ inputs.directory }} | jq -R -s -c 'split("\n")[:-1]' | yq -p=json '.[] as $i ireduce ({}; .[$i] = ["${{ inputs.directory }}" + $i + "${{ inputs.suffix }}"])' > .changed_files.yaml
       - name: Find changed modules
         id: changed-files
