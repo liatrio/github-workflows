@@ -32,8 +32,8 @@ jobs:
         # module_two:
         #   - modules/module_two/**
         run: >
-          ls -d ${{ inputs.directory }}/*/ |
-          xargs -n 1 basename |
+          ls -d '${{ inputs.directory }}'/*/ |
+          xargs -d '\n' -n 1 basename |
           jq -R -s -c 'split("\n")[:-1]' |
           yq -p=json '.[] as $i ireduce ({}; .[$i] = ["${{ inputs.directory }}"+ $i + "${{ inputs.suffix }}"])' > .changed_files_config.yaml &&
           cat .changed_files_config.yaml
