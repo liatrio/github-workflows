@@ -1,0 +1,68 @@
+name: Release
+
+on:
+  workflow_call:
+    inputs:
+      directory:
+        description: "The directory containing module directories which should be individually released. e.g. 'modules/'"
+        required: true
+        type: string
+      suffix:
+        description: "An optional suffix for determining which paths of a module consitute a releasable change. Defaults to '/**' denoting any files within a module."
+        required: false
+        type: string
+        default: "/**"
+      version-delimiter:
+        description: "The delimiter between the module name and semantic version number in the resulting releases. Defaults to '-v'"
+        required: false
+        type: string
+        default: "-v"
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.value }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Find all module names/locations
+        # Outputs a files.yaml for tj-actions/changed-files with keys of all files/directories in the input and search paths matching the given directory path plus an optional suffix. i.e.
+        # module_one:
+        #   - modules/module_one/**
+        # module_two:
+        #   - modules/module_two/**
+        run: >
+          ls -d '${{ inputs.directory }}'/*/ |
+          xargs -d '\n' -n 1 basename |
+          jq -R -s -c 'split("\n")[:-1]' |
+          yq -p=json '.[] as $i ireduce ({}; .[$i] = ["${{ inputs.directory }}"+ $i + "${{ inputs.suffix }}"])' > .changed_files_config.yaml &&
+          cat .changed_files_config.yaml
+      - name: Find changed modules
+        id: changed-files
+        uses: tj-actions/changed-files@v44
+        with:
+          files_yaml_from_source_file: .changed_files_config.yaml
+      - id: matrix
+        run: |
+          CHANGED_MODULES=$(echo ${{ steps.changed-files.outputs.changed_keys }} | jq -R -c 'split(" ")')
+          echo "value=$CHANGED_MODULES" >> $GITHUB_OUTPUT
+  tag-releases:
+    needs: [ setup ]
+    if: needs.setup.outputs.matrix != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        module: ${{fromJSON(needs.setup.outputs.matrix)}}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Create Release
+        working-directory: "${{ inputs.directory }}/${{ matrix.module }}"
+        run: |
+          npm init -y
+          npm install -D semantic-release semantic-release-monorepo
+          npx --no-install semantic-release -e semantic-release-monorepo --tag-format='${{ matrix.module }}${{ inputs.version-delimiter }}${version}' --plugins @semantic-release/commit-analyzer,@semantic-release/release-notes-generator,@semantic-release/github
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
