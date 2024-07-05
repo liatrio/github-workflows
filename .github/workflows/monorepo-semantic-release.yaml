@@ -12,6 +12,11 @@ on:
         required: false
         type: string
         default: "/**"
+      version-delimiter:
+        description: "The delimiter between the module name and semantic version number in the resulting releases. Defaults to '-v'"
+        required: false
+        type: string
+        default: "-v"
 
 jobs:
   setup:
@@ -58,6 +63,6 @@ jobs:
         run: |
           npm init -y
           npm install -D semantic-release semantic-release-monorepo
-          npx --no-install semantic-release -e semantic-release-monorepo --tag-format='${{ matrix.module }}-v${version}' --plugins @semantic-release/commit-analyzer,@semantic-release/release-notes-generator,@semantic-release/github
+          npx --no-install semantic-release -e semantic-release-monorepo --tag-format='${{ matrix.module }}${{ inputs.version-delimiter }}${version}' --plugins @semantic-release/commit-analyzer,@semantic-release/release-notes-generator,@semantic-release/github
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
