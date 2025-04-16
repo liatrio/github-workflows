@@ -16,7 +16,7 @@ on:
         description: "The delimiter between the module name and semantic version number in the resulting releases. Defaults to '-v'"
         required: false
         type: string
-        default: "-v"
+        default: "/v"
 
 jobs:
   setup:
