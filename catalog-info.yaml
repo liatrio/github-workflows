@@ -1,0 +1,14 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: github-workflows
+  description: Collection of reusable github workflows
+  annotations:
+    github.com/project-slug: liatrio/github-workflows
+  tags:
+    - github
+    - workflows
+spec:
+  type: library
+  lifecycle: production
+  owner: flywheel
